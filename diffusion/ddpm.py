@@ -141,7 +141,7 @@ class DenoisingDiffusionProbabilisticModel(torch.nn.Module):
         all_steps = list(reversed(range(0, self.T, skip)))
         if t_start is not None:
             all_steps = [s for s in all_steps if s <= t_start]
-        print(all_steps)
+        # print(all_steps)
         self.eval()
         with torch.no_grad():
             for i in all_steps:
