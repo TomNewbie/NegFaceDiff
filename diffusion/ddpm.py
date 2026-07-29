@@ -120,7 +120,7 @@ class DenoisingDiffusionProbabilisticModel(torch.nn.Module):
         return x_t
     
     def original_sample_ddim(self, n_samples, size, x_T: torch.Tensor = None, context: torch.Tensor = None,
-                    dropout_mask: torch.Tensor = None, eta=0, ddim_step=200) -> torch.Tensor:
+                    dropout_mask: torch.Tensor = None, eta=0, ddim_step=200, t_start: int = None) -> torch.Tensor:
         # if initial noise is not provided then sample it
         # style test
         x_t = x_T if x_T is not None else self.sample_prior(n_samples, size).cuda()
@@ -138,9 +138,12 @@ class DenoisingDiffusionProbabilisticModel(torch.nn.Module):
         skip = self.T // ddim_step
         print("DDIM Sampling")
         print("skip: %d" % skip)
+        all_steps = list(reversed(range(0, self.T, skip)))
+        if t_start is not None:
+            all_steps = [s for s in all_steps if s <= t_start]
         self.eval()
         with torch.no_grad():
-            for i in reversed(range(0, self.T, skip)):
+            for i in all_steps:
                 t = torch.tensor(i).repeat(n_samples).cuda()
 
                 model_output = self.eps_model(x_t, t, context, dropout_mask)
