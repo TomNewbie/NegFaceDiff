@@ -60,7 +60,8 @@ class DenoisingDiffusionProbabilisticModel(torch.nn.Module):
 
         return self.criterion(eps, (1 + w) * pos_effect - w * neg_effect)
 
-    def original_sample_ddpm(self, n_samples, size, x_T: torch.Tensor = None, context: torch.Tensor = None, dropout_mask: torch.Tensor = None) -> torch.Tensor:
+    def original_sample_ddpm(self, n_samples, size, x_T: torch.Tensor = None, context: torch.Tensor = None,
+                    dropout_mask: torch.Tensor = None, t_start: int = None) -> torch.Tensor:
         # if initial noise is not provided then sample it
         x_t = x_T if x_T is not None else self.sample_prior(n_samples, size).cuda()
 
@@ -68,7 +69,11 @@ class DenoisingDiffusionProbabilisticModel(torch.nn.Module):
         self.eval()
         with torch.no_grad():
 
-            pbar = tqdm(reversed(range(0, self.T)), total=self.T)
+            all_steps = list(reversed(range(0, self.T)))
+            if t_start is not None:
+                all_steps = [s for s in all_steps if s <= t_start]
+
+            pbar = tqdm(all_steps, total=len(all_steps))
             pbar.set_description("DDPM Sampling")
 
             for i in pbar:
